@@ -1,5 +1,8 @@
 var webpack = require('webpack');
 
+//引用单独打包模块
+var ExtractTextPlugin = require("extract-text-webpack-plugin");
+
 module.exports = {
   devtool: 'source-map',
   debug: true,
@@ -29,6 +32,8 @@ module.exports = {
       Ajax: 'ajax',
       Context: 'webcontext'
     })*/
+    new ExtractTextPlugin("style/[name].css")  //配置css style引用
+    //new ExtractTextPlugin("style/style.css", {allChunks: true})// 配置css 单独打包
   ],
   module: {
     loaders: [

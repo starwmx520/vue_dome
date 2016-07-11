@@ -1,0 +1,93 @@
+---webpack 是一款模块加载器兼打包工具
+它能把各种资源如js jsx coffee less sass 图片等作为模块来使用和处理
+
+----我们可以直接使用 require(XXX) 的形式来引入各模块
+即使它们可能需要经过编译（比如JSX和sass），
+但我们无须在上面花费太多心思，因为 webpack 
+有着各种健全的加载器（loader）在默默处理这些事情
+
+----优势
+1. webpack 是以 commonJS 的形式来书写脚本滴，但对 AMD/CMD 的支持也很全面，方便旧项目进行代码迁移。
+2. 能被模块化的不仅仅是 JS 了。
+3. 开发便捷，能替代部分 grunt/gulp 的工作，比如打包、压缩混淆、图片转base64等。
+4. 扩展性强，插件机制完善，特别是支持 React 热插拔（见 react-hot-loader ）的功能让人眼前一亮。
+
+----安装
+npm init 
+npm install webpack --save
+
+----命令
+webpack --watch   //监听变动并自动打包
+webpack -p    //压缩混淆脚本，这个非常非常重要！
+webpack -d    //生成map映射文件，告知哪些模块被最终打包到哪里了
+
+----配置
+创建webpack.config.js
+
+var webpack = require('webpack');
+//引用单独打包模块
+var ExtractTextPlugin = require("extract-text-webpack-plugin");
+
+module.exports={
+	  //插件项
+    plugins: [
+    	//new webpack.ProvidePlugin({$: 'jquery'}),
+    	//这个可以使jquery变成全局变量，妮不用在自己文件require('jquery')了
+
+        //new webpack.optimize.CommonsChunkPlugin('vendor', 'vendor.bundle.js'),
+        //这是妮第三方库打包生成的文件
+        
+        
+		new webpack.optimize.CommonsChunkPlugin("js/common.js"),//插件用于提取多个入口文件的公共脚本部分，生成common.js文件，方便页面引用。
+		//new ExtractTextPlugin("[name].css")  //配置css style引用
+		new ExtractTextPlugin("style/style.css", {allChunks: true})// 配置css 单独打包
+
+    ],
+    //页面入口文件配置
+    entry: {
+        index : './src/js/page/index.js'
+    },
+    //入口文件输出配置
+    output: {
+        path: 'public/build',//输出目录，从当前目录开始
+        //定义生成后动态require时引用的目录 
+        //在vue 中动态加载模块时：require([],resolve)  会用到时。
+        publicPath: 'build/',
+        filename: '[name].js'
+    },
+    module: {
+        //加载器配置
+        loaders: [
+            { test: /\.css$/, loader: 'style-loader!css-loader' },
+            { test: /\.js$/, loader: 'jsx-loader?harmony' },
+            { test: /\.scss$/, loader: 'style!css!sass?sourceMap'},
+            { test: /\.(png|jpg)$/, loader: 'url-loader?limit=8192'},
+            //在 AMD/CMD 中，我们需要对不符合规范的模块（比如一些直接返回全局变
+            //量的插件）进行shim处理，这时候我们需要使用 exports-loader 来帮忙：
+            //使用时require('./tool/swipe.js');  swipe(); 
+            { test: require.resolve("./src/js/tool/swipe.js"),  loader: "exports?swipe"}
+        ]
+    },
+    //其它解决方案配置
+    resolve: {
+        //查找module的话从这里开始查找
+        root: 'E:/github/flux-example/src', //绝对路径
+        //自动扩展文件后缀名，意味着我们require模块可以省略不写后缀名
+        extensions: ['', '.js', '.json', '.scss'],
+        //模块别名定义，方便后续直接引用别名，无须多写长长的地址
+        alias: {//配置第三方插件别名
+           'jquery': __dirname + '/plugins/jquery.js'
+        }
+    }
+}
+
+----自定义公共模块提取
+var CommonsChunkPlugin = require("webpack/lib/optimize/CommonsChunkPlugin");
+plugins内定义：
+new CommonsChunkPlugin("admin-commons.js", ["ap1", "ap2"]),
+
+
+----独立打包样式文件
+new ExtractTextPlugin("[name].css")  //配置css style引用
+new ExtractTextPlugin("style/style.css", {allChunks: true})// 配置css 单独打包
+
